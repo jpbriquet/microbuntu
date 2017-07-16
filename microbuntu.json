@@ -1,0 +1,102 @@
+{
+  "description": "Microbuntu is a minimalistic Ubuntu LTS Linux VM",
+  "variables": {
+      "BASE_USER": "ubuntu"
+  },
+  "builders": [
+    {
+      "name": "microbuntu-16.04-amd64",
+      "type": "virtualbox-iso",
+      "headless": true,
+      "vboxmanage": [
+          ["modifyvm","{{.Name}}","--cpus","1"],
+          ["modifyvm","{{.Name}}","--memory","1024"],
+          ["modifyvm","{{.Name}}","--cableconnected1","on"],
+          ["modifyvm","{{.Name}}","--audio","none"],
+          ["modifyvm","{{.Name}}","--usb","off"]
+      ],
+      "disk_size": 40960,
+      "guest_os_type": "Linux26_64",
+      "iso_urls": ["http://ftp.free.fr/mirrors/ftp.ubuntu.com/releases/xenial/ubuntu-16.04.2-server-amd64.iso"],
+      "iso_checksum": "737ae7041212c628de5751d15c3016058b0e833fdc32e7420209b76ca3d0a535",
+      "iso_checksum_type": "sha256",
+      "communicator": "ssh",
+      "http_directory": "./http",
+      "boot_wait": "10s",
+      "boot_command": [
+        "<enter><wait><f6><esc>",
+        "<bs><bs><bs><bs><bs><bs><bs><bs><bs><bs>",
+        "<bs><bs><bs><bs><bs><bs><bs><bs><bs><bs>",
+        "<bs><bs><bs><bs><bs><bs><bs><bs><bs><bs>",
+        "<bs><bs><bs><bs><bs><bs><bs><bs><bs><bs>",
+        "<bs><bs><bs><bs><bs><bs><bs><bs><bs><bs>",
+        "<bs><bs><bs><bs><bs><bs><bs><bs><bs><bs>",
+        "<bs><bs><bs><bs><bs><bs><bs><bs><bs><bs>",
+        "<bs><bs><bs><bs><bs><bs><bs><bs><bs><bs>",
+        "<bs><bs><bs>",
+        "/install/vmlinuz<wait>",
+        " auto<wait>",
+        " console-setup/ask_detect=false<wait>",
+        " console-setup/layoutcode=us<wait>",
+        " console-setup/modelcode=pc105<wait>",
+        " debconf/frontend=noninteractive<wait>",
+        " debian-installer=en_US<wait>",
+        " fb=false<wait>",
+        " initrd=/install/initrd.gz<wait>",
+        " locale=en_US<wait>",
+        " keyboard-configuration/modelcode=SKIP",
+        " grub-installer/bootdev=/dev/sda<wait>",
+        " hostname=microbuntu",
+        " preseed/url=http://{{.HTTPIP}}:{{.HTTPPort}}/preseed.cfg",
+        " -- <wait>",
+        "<enter><wait>"
+      ],
+      "guest_additions_mode": "disable",
+      "ssh_username": "{{user `BASE_USER`}}",
+      "ssh_password": "{{user `BASE_USER`}}",
+      "ssh_wait_timeout": "10m",
+      "shutdown_command": "echo '{{user `BASE_USER`}}' | sudo -S -E shutdown -P now"
+    }
+  ],
+  "provisioners": [
+      {
+          "type": "shell",
+          "execute_command": "echo '{{user `BASE_USER`}}' | {{ .Vars }} sudo -S -E /bin/sh '{{ .Path }}'",
+          "environment_vars": [
+              "DEBIAN_FRONTEND=noninteractive",
+              "TERM=linux",
+              "BASE_USER={{user `BASE_USER`}}"
+          ],
+          "scripts": [
+              "./scripts/base.sh",
+              "./scripts/vagrant.sh",
+              "./scripts/sshd.sh"
+          ]
+      },
+      {
+          "type": "file",
+          "source": "./customize/data",
+          "destination": "/var/customize/"
+      },
+      {
+          "type": "shell",
+          "execute_command": "echo '{{user `BASE_USER`}}' | {{ .Vars }} sudo -S -E /bin/sh '{{ .Path }}'",
+          "environment_vars": [
+            "DEBIAN_FRONTEND=noninteractive",
+            "TERM=linux",
+            "BASE_USER={{user `BASE_USER`}}"
+          ],
+          "scripts": [
+              "./customize/run.sh",
+              "./scripts/clean.sh"
+          ]
+      }
+  ],
+  "post-processors": [
+    {
+      "type": "vagrant",
+      "vagrantfile_template": "vagrantfile-box.tpl",
+      "output": "builds/{{user `BOX_NAME`}}-{{user `BOX_VERSION`}}.box"
+    }
+  ]
+}

@@ -6,7 +6,7 @@ This box will be updated as soon as possible when a new Ubuntu LTS is released.
 
 ## Usage
 
-The box is available on [Hashicorp's Atlas](https://atlas.hashicorp.com/jpbriquet/boxes/microbuntu)
+The box is available on [Hashicorp's Vagrant Cloud](https://app.vagrantup.com/jpbriquet/boxes/microbuntu)
 
 To use it, just open a console and type :
 ```
